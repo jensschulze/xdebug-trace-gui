@@ -241,7 +241,7 @@ error_reporting(0);
 				<tr>
 						<td style="padding-left:<?= ($trace['level'] * 10) ?>px">
 							<?php if ($trace['type'] == 0)
-							{ ?><a target="_blank" href="http://php.net/<?= $trace['function'] ?>"><span class="native" title="PHP doc <?= $trace['function'] ?>">&#x261b; </span></a><?php
+							{ ?><a target="_blank" href="http://php.net/<?= $trace['function'] ?>"><span class="native" title="<?= $trace['level'] ?> - PHP doc <?= $trace['function'] ?>">&#x261b; </span></a><?php
 				}
 				else
 				{
@@ -265,7 +265,7 @@ error_reporting(0);
 					}
 					
 					
-								?><span class="<?= $userFunction ?>" title="UDF ">&#x261b; </span><?php } ?><strong><?php if ($trace['type'] == 0)
+								?><span class="<?= $userFunction ?>" title="<?= $trace['level'] ?> - UDF ">&#x261b; </span><?php } ?><strong><?php if ($trace['type'] == 0)
 					{ ?>\<?php } ?><?= $trace['function'] ?></strong><ul><?= $trace['valParms'] ?></ul><br />
 							<small><?= $trace['filename'] ?></small>
 							<span class="warning">
