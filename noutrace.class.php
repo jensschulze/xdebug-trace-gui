@@ -9,6 +9,8 @@ class noutrace
   public $memoryAlarm = 0.3;
   public $timeAlarm = 0.03;
   public $customNamespace = 'Corretge\\';
+  public $filesize;
+  
   protected $defFN;
 
   public function __construct()
@@ -112,6 +114,8 @@ class noutrace
     {
       throw new Exception("Can't access to file " . $this->logDirectory . '/' . $this->file);
     }
+    
+    $this->filesize = filesize($this->logDirectory . '/' . $this->file);
   }
 
   /**
@@ -126,7 +130,7 @@ class noutrace
      * recuperem la llista de funcions, les pròpies de PHP hi
      * seran sota ['internal']
      */
-    $this->defFN = get_defined_functions();
+    //$this->defFN = get_defined_functions();
 
     /**
      * counter
@@ -139,6 +143,29 @@ class noutrace
     $aSumary = array();
     $aSumaryS = array();
 
+
+    /**
+     * inicialitzem alguns camps
+     */
+    $prevLvl = 0;
+    $prevTim = 0;
+    $prevMem = 0;
+    $class = 'odd';
+
+    /**
+     * mirem si ens demanen iniLin
+     */
+    if (!isset($_GET['iniLin']))
+    {
+      $_GET['iniLin'] = 0;
+      $ctrlPrimeraLin = false;
+    }
+    else
+    {
+      $ctrlPrimeraLin = true;
+    }
+    $iniLin = (double) $_GET['iniLin'];
+    $maxLin = $iniLin + 1024;
 
     /**
      * només acceptarem tipus de traça 1
@@ -155,12 +182,25 @@ class noutrace
      * Process all lines
      */
     $fh = fopen($this->logDirectory . '/' . $this->file, 'r');
+    $nRow = 0;
+    $eof = true;
+    
     while ($jReadedLine = fgets($fh))
     {
+      $nRow++;
+      if ($nRow > $maxLin)
+      {
+        $eof = false;
+        break;
+      }
+      elseif ($nRow < $iniLin)
+      {
+        continue;
+      }
 
       $jData = explode("\t", $jReadedLine);
       $jDataCnt = count($jData);
-      
+
       /**
        * si es tracta de la capçalera de l'arxiu, la mostrem com a info
        */
@@ -168,15 +208,16 @@ class noutrace
       {
         echo "<pre>$jReadedLine</pre>";
         continue;
-        
-      } 
+      }
       /**
        * si és el registre de finalització d'una instrucció, la processem
        */
       elseif ($jDataCnt == 5)
       {
+
+
 //        list($jFLevel, $jFId, $jFPoint, $jFTime, $jFMemory) = $jData;
-        
+
 
         /**
          * Si és el final de tot, no el comptarem, doncs no tenim cap id d'incic
@@ -184,19 +225,23 @@ class noutrace
          */
         if ($jData[0] == '')
         {
-          echo "<h3>TOTAL " . number_format(count($aSteps), 0) . 
-            " function/method calls in ". number_format($jData[3],6) . " ms with " . 
-            number_format(((int) $jData[4]) / 1024,3) . " KB's </h3>";
+          echo "<h3>TOTAL " . number_format(count($aSteps), 0) .
+          " function/method calls in " . number_format($jData[3], 6) . " ms with " .
+          number_format(((int) $jData[4]) / 1024, 3) . " KB's </h3>";
         }
         else
         {
+
+          continue;
+
           /**
            * li restem el temps i la memòria
            */
-          $aSteps[$jData[1]][3] = number_format((float) $jData[3] - (float) $aSteps[$jData[1]][3], 6);
-          $aSteps[$jData[1]][4] = number_format((float) $jData[4] - (float) $aSteps[$jData[1]][4], 0);
+          $aSteps[$jData[1]][3] = number_format((float) $jData[3] - (float) $aSteps[$jData[1]][3],
+                                                6);
+          $aSteps[$jData[1]][4] = number_format((float) $jData[4] - (float) $aSteps[$jData[1]][4],
+                                                0);
         }
-        
       }
       /**
        * En qualsevol altre cas, és un registre d'inici d'instrucció
@@ -206,119 +251,139 @@ class noutrace
 //        list($jILevel, $jIId, $jIPoint, $jITime, $jIMemory, $jIFunction, 
 //          $jIType, $jIFile, $jIFilename, $jILine, $jINumParms) = $jData;
         
-        /**
-         * iniciem un registre a l'array que ho te tot
-         */
-        $aSteps[$jData[1]] = $jData;
         
-      }
+        If ($prevTim == 0)
+        {
+          $prevTim = (float) $jData[3];
+          $prevMem = (float) $jData[4];
+          continue;
+        }
+        
+        
+        /**
+         * procedim a fer la sortida
+         */
+        
+        /**
+         * si hi ha un canvi de nivell, en funció de si és 
+         * més petit o més gran, 
+         */
+        if ($prevLvl < $jData[0])
+        {
+          if ($ctrlPrimeraLin)
+          {
+            echo str_repeat("<ul>", $jData[0]);
+            $ctrlPrimeraLin = false;
+          }
+          else
+          {
+          echo "<ul>";
+          }
+        }
+        elseif ($prevLvl > $jData[0])
+        {
+          echo str_repeat("</ul>", $prevLvl - $jData[0]);
+        }
 
-      
-    }
-    
-    /**
-     * inicialitzem alguns camps
-     */
-    $prevLvl = 0;
-    $TimeLastLvl = 0;
-    $MemLastLvl = 0;
-    $class = 'odd';
-    
-    /**
-     * procedim a fer la sortida
-     */
-    foreach($aSteps as $step)
-    {
-      /**
-       * si hi ha un canvi de nivell, en funció de si és 
-       * més petit o més gran, 
-       */
-      if ($prevLvl < $step[0])
-      {
-        echo "<ul>";
-      }
-      elseif ($prevLvl > $step[0])
-      {
-        echo str_repeat("</ul>", $prevLvl - $step[0]);
-      }
-      
-      
-      $prevLvl = $step[0];
-      
-      echo "<li class=\"{$class}\">";
-      
-    
-      if ($class == 'odd')
-      {
-        $class = 'even';
-      }
-      else
-      {
-        $class = 'odd';
-      }
 
-      
-      
-      echo '<span class="line">';
-      echo $step[9];
-      echo "</span>";
+        $prevLvl = $jData[0];
 
-            echo '<span class="time">';
-      echo $step[3];
-      echo "</span>";
-      
-            echo '<span class="mem">';
-      echo $step[4];
-      echo "</span>";
-      
-      
-      
+        echo "<li class=\"{$class}\">";
+
+
+        if ($class == 'odd')
+        {
+          $class = 'even';
+        }
+        else
+        {
+          $class = 'odd';
+        }
+
+
+
+        echo '<span class="line">';
+        echo $jData[9];
+        echo "</span>";
+
+        echo '<span class="time">';
+        
+//        echo "ini"  . number_format($prevTim, 6) . "<br />";
+//        echo "end"  . number_format((float) $jData[3], 6) . "<br />";
+        echo number_format((float) $jData[3] - $prevTim, 6);
+        
+        echo "</span>";
+
+        echo '<span class="mem">';
+//        echo "ini"  . number_format($prevMem, 0) . "<br />";
+//        echo "end"  . number_format((float) $jData[4], 0) . "<br />";
+        echo number_format((float) $jData[4] - $prevMem, 0);
+        echo "</span>";
+
+
+
 //        list($jILevel, $jIId, $jIPoint, $jITime, $jIMemory, $jIFunction, 
 //          $jIType, $jIFile, $jIFilename, $jILine, $jINumParms) = $jData;
 
-      echo '<span class="func">';
-      echo "<b>{$step[5]}</b><br/>";
-      
-      if ($step[10] > 0)
-      {
-        echo "<ul>";
-        
-        for ($jI=11; $jI <= 10 + $step[10]; $jI++)
+        echo '<span class="func">';
+        echo "<b>{$jData[5]}</b><br/>";
+
+        if ($jData[10] > 0)
         {
-          echo "<li class=\"parm\">{$step[$jI]}</li>";
+          echo "<ul>";
+
+          for ($jI = 11; $jI <= 10 + $jData[10]; $jI++)
+          {
+            echo "<li class=\"parm\">{$jData[$jI]}</li>";
+          }
+          echo "</ul>";
         }
-        echo "</ul>";
+        elseif (!empty($jData[7]))
+        {
+          echo "<ul><li class=\"parm\">{$jData[7]}</li></ul>";
+        }
+
+        echo "<br/>";
+
+        echo "<i class=\"pgm\">{$jData[8]}</i>";
+
+
+        echo '</span>';
+
+
+        echo "</li>";
         
+        $prevTim = (float) $jData[3];
+          $prevMem = (float) $jData[4];
+          
+        $lastLine = $nRow;
+          
       }
-      elseif (!empty($step[8]))
-      {
-        echo "<ul><li class=\"parm\">{$step[8]}</li></ul>";
-      }
-      
-      echo "<br/>";
-      
-      echo "<i class=\"pgm\">{$step[7]}</i>";
-      
-      
-      echo '</span>';
-      
-      
-      echo "</li>";
-      
     }
     
+    if (!$eof)
+    {
+        $_GET['iniLin'] = $lastLine + 1;
+        echo "<br /><br><a href=\"{$_SERVER['SCRIPT_NAME']}?";
+        foreach ($_GET as $parm => $val)
+        {
+          echo "{$parm}={$val}&";
+        }
+        echo "\">next 1024 lines</a>";
+     
+    }
   }
-  
+
   public function debugMem($line, $method = null)
   {
-    echo "<!-- line {$line} memory " . number_format(memory_get_usage(true),0);
-    
+    echo "<!-- line {$line} memory " . number_format(memory_get_usage(true), 0);
+
     if (isset($method))
     {
       echo ' method ' . $method;
     }
-    
-    echo  " -->";
+
+    echo " -->";
   }
 
 }

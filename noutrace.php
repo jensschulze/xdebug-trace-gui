@@ -40,10 +40,11 @@
       $xdb->debugMem(__LINE__);
       $xdb->setParams();
     }
-    ?>
-    <h2>Output <?= $xdb->file ?></h2>
-
-    <?php
+    
+    echo "<h2>Output {$xdb->file}</h2>";
+    echo number_format($xdb->filesize, 0) . " bytes <br />";
+    
+    
     $xdb->debugMem(__LINE__);
     $xdb->trace();
     $xdb->debugMem(__LINE__);
