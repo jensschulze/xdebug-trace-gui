@@ -1,7 +1,7 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>Xdebug Trace File Statistics</title>
+    <title>Xdebug Trace File Statistics <?php if(isset($_GET['file'])) echo ' - ' . htmlentities ($_GET['file']); ?></title>
     <LINK href="trace.css" rel="stylesheet" type="text/css">
     <!-- <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script> -->
   </head>

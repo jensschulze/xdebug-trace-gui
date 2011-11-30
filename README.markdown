@@ -14,3 +14,4 @@ trace.php Xdebug trace gui. Old style, all in a page, with sumaries
 
 graph.php Xdebug trace graph. Statistics memory consumition MB per centesims. You need the parent folder of jpGraph in the include_path.
 
+Advisor: the code was writed quickly. The next time, better ;-)
