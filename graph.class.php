@@ -30,6 +30,8 @@ class graph extends noutrace
 
 	private function output()
 	{
+		echo "<pre>";
+		var_dump($_SESSION['plot_centa'][$this->file]);
 		echo "<h2>Total time {$this->totTim} seconds</h2>";
 		echo "<h2>Total memory " . number_format($this->totMem,0)  . " bytes</h2>";
 		echo "<img src=\"plot_centa.php?file={$this->file}\" />";
@@ -145,12 +147,20 @@ class graph extends noutrace
 			 * 
 			 * si hi ha canvi de centèssima, li passem l'acumulat de consum de memòria
 			 */
-			if (substr($jData[3], 0, 4) != $prevCenta)
+			$nouCenta = (int) ($jData[3] * 100);
+			
+			if ($nouCenta != $prevCenta)
 			{
 				$latMem = 0;
-				$_SESSION['plot_centa'][$this->file][] = number_format($jData[4] / (1024 * 1024), 1);
-				$prevCenta = substr($jData[3], 0, 4);
+				
+				for ($i = $prevCenta; $i < $nouCenta; $i += 1)
+				{
+					$_SESSION['plot_centa'][$this->file][] = number_format($jData[4] / (1024 * 1024), 1);
 
+				}
+				
+				$prevCenta = (int) ($jData[3] * 100);
+				
 				/**
 				 * si és el primer cop, inicialitzem
 				 */
@@ -194,8 +204,11 @@ class graph extends noutrace
 					'mem' => ($jData[4] - $prevMem));
 			}
 
-			$this->totTim += ($jData[3] - $prevTim);
-				$this->totMem += ($jData[4] - $prevMem);
+			$this->totTim = $jData[3];
+			if ($jData[4]>$this->totMem)
+			{
+				$this->totMem = $jData[4];
+			}
 
 			$prevTim = $jData[3];
 			$prevMem = $jData[4];
