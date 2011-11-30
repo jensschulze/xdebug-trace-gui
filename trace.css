@@ -97,6 +97,12 @@ span.Corretge {
 tr:nth-child(even) {background: ivory;}
 tr:nth-child(odd) {background: aliceblue;}
 
+ul {
+  margin-left: 0.33em;
+  padding-left: 0.66em;
+  
+}
+
 li { 
   line-height: 1.5em;
      padding-top: 0.2em;
@@ -108,8 +114,9 @@ li.odd {background: aliceblue;}
 
 li.parm {
   line-height: 1.1em;
-  font-family: 'Lucida Console';
+  font-family: 'Lucida Console', monospace;
   font-size: 0.9em;
+  width: 66%;
 }
 
 .func {
@@ -127,8 +134,8 @@ li.parm {
 
 .mem {
   position: absolute;
-  width: 5%;
-  left: 94%;
+  width: 6%;
+  left: 93%;
   vertical-align: top;
   text-align: right;
 }
@@ -136,7 +143,7 @@ li.parm {
 .time {
   position: absolute;
   width: 6%;
-  left: 88%;
+  left: 87%;
   vertical-align: top;
   text-align: right;
 }
@@ -145,4 +152,11 @@ li.parm {
 .pgm {
   font-size: 0.8em;
   font-style: italic;
+}
+
+
+
+.alarm {
+  border: 1px solid darkred;
+  padding: 4px;
 }

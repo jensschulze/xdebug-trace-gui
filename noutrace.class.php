@@ -3,387 +3,384 @@
 class noutrace
 {
 
-  public $logDirectory;
-  public $traceFormat;
-  public $file;
-  public $memoryAlarm = 0.3;
-  public $timeAlarm = 0.03;
-  public $customNamespace = 'Corretge\\';
-  public $filesize;
-  
-  protected $defFN;
+	public $logDirectory;
+	public $traceFormat;
+	public $file;
+	public $memoryAlarm = 0.3;
+	public $timeAlarm = 0.03;
+	public $customNamespace = 'Corretge\\';
+	public $filesize;
+	protected $defFN;
 
-  public function __construct()
-  {
-    $this->logDirectory = ini_get('xdebug.trace_output_dir');
-    $this->traceFormat = ini_get('xdebug.trace_format');
-    ini_set('xdebug.auto_trace', 'Off');
-  }
+	public function __construct()
+	{
+		$this->logDirectory = ini_get('xdebug.trace_output_dir');
+		$this->traceFormat = ini_get('xdebug.trace_format');
+		ini_set('xdebug.auto_trace', 'Off');
+	}
 
-  public function rtvFiles()
-  {
-    $ret = '';
-    $files = new DirectoryIterator($this->logDirectory);
-    foreach ($files as $file)
-    {
+	public function rtvFiles()
+	{
+		$ret = '';
+		$files = new DirectoryIterator($this->logDirectory);
+		foreach ($files as $file)
+		{
 
-      if (substr_count($file->getFilename(), '.xt') == 0)
-      {
-        continue;
-      }
+			if (substr_count($file->getFilename(), '.xt') == 0)
+			{
+				continue;
+			}
 
-      $date = explode('.', $file->getFilename());
-      $date = date('Y-m-d H:i:s', $file->getCTime());
-
-
-      $ret .= '<option value="' . $file->getFilename() . '"> ' . $date . ' - ' . $file->getFilename() . '- ' . number_format($file->getSize() / 1024,
-                                                                                                                             0,
-                                                                                                                             ',',
-                                                                                                                             '.') . ' KB</option>';
-    }
-
-    return $ret;
-  }
-
-  public function aryComp($a, $b)
-  {
-    if ($a['cnt'] == $b['cnt'])
-    {
-      return 0;
-    }
-    /**
-     * fem-ho desc
-     */
-    return ($a['cnt'] > $b['cnt']) ? -1 : 1;
-  }
-
-  public function usortByArrayKey(&$array, $key, $asc=SORT_ASC)
-  {
-    $sort_flags = array(SORT_ASC, SORT_DESC);
-    if (!in_array($asc, $sort_flags))
-      throw new InvalidArgumentException('sort flag only accepts SORT_ASC or SORT_DESC');
-    $cmp = function(array $a, array $b) use ($key, $asc, $sort_flags)
-      {
-        if (!is_array($key))
-        { //just one key and sort direction 
-          if (!isset($a[$key]) || !isset($b[$key]))
-          {
-            throw new Exception('attempting to sort on non-existent keys');
-          }
-          if ($a[$key] == $b[$key])
-            return 0;
-          return ($asc == SORT_ASC xor $a[$key] < $b[$key]) ? 1 : -1;
-        } else
-        { //using multiple keys for sort and sub-sort 
-          foreach ($key as $sub_key => $sub_asc)
-          {
-            //array can come as 'sort_key'=>SORT_ASC|SORT_DESC or just 'sort_key', so need to detect which 
-            if (!in_array($sub_asc, $sort_flags))
-            {
-              $sub_key = $sub_asc;
-              $sub_asc = $asc;
-            }
-            //just like above, except 'continue' in place of return 0 
-            if (!isset($a[$sub_key]) || !isset($b[$sub_key]))
-            {
-              throw new Exception('attempting to sort on non-existent keys');
-            }
-            if ($a[$sub_key] == $b[$sub_key])
-              continue;
-            return ($sub_asc == SORT_ASC xor $a[$sub_key] < $b[$sub_key]) ? 1 : -1;
-          }
-          return 0;
-        }
-      };
-    usort($array, $cmp);
-  }
-
-  /**
-   * establim els paràmetres que ens arriben del formulari.
-   */
-  public function setParams()
-  {
-    $this->file = basename($_GET['file']);
-    $this->memoryAlarm = (float) $_GET['memory'];
-    $this->timeAlarm = (float) $_GET['time'];
-
-    /**
-     * mirem que sigui un arxiu vàlid
-     */
-    if (!file_exists($this->logDirectory . '/' . $this->file))
-    {
-      throw new Exception("Can't access to file " . $this->logDirectory . '/' . $this->file);
-    }
-    
-    $this->filesize = filesize($this->logDirectory . '/' . $this->file);
-  }
-
-  /**
-   * la mare dels ous, la traça
-   * 
-   * Sense que serveixi de precedents i per un tema de performance, aquest
-   * mètode escriurà a stdoutput directament.
-   */
-  public function trace()
-  {
-    /**
-     * recuperem la llista de funcions, les pròpies de PHP hi
-     * seran sota ['internal']
-     */
-    //$this->defFN = get_defined_functions();
-
-    /**
-     * counter
-     */
-    $jCnt = 0;
-
-    /**
-     * Sumary
-     */
-    $aSumary = array();
-    $aSumaryS = array();
+			$date = explode('.', $file->getFilename());
+			$date = date('Y-m-d H:i:s', $file->getCTime());
 
 
-    /**
-     * inicialitzem alguns camps
-     */
-    $prevLvl = 0;
-    $prevTim = 0;
-    $prevMem = 0;
-    $class = 'odd';
+			$ret .= '<option value="' . $file->getFilename() . '"> ' . $date . ' - ' . $file->getFilename() . '- ' . number_format($file->getSize() / 1024, 0, ',', '.') . ' KB</option>';
+		}
 
-    /**
-     * mirem si ens demanen iniLin
-     */
-    if (!isset($_GET['iniLin']))
-    {
-      $_GET['iniLin'] = 0;
-      $ctrlPrimeraLin = false;
-    }
-    else
-    {
-      $ctrlPrimeraLin = true;
-    }
-    $iniLin = (double) $_GET['iniLin'];
-    $maxLin = $iniLin + 1024;
+		return $ret;
+	}
 
-    /**
-     * només acceptarem tipus de traça 1
-     */
-    if ($this->traceFormat != 1)
-    {
-      throw new Exception("xdebug.trace_format in /etc/php5/conf.d/xdebug.ini must be 1");
-    }
+	public function aryComp($a, $b)
+	{
+		if ($a['cnt'] == $b['cnt'])
+		{
+			return 0;
+		}
+		/**
+		 * fem-ho desc
+		 */
+		return ($a['cnt'] > $b['cnt']) ? -1 : 1;
+	}
+
+	public function usortByArrayKey(&$array, $key, $asc=SORT_ASC)
+	{
+		$sort_flags = array(SORT_ASC, SORT_DESC);
+		if (!in_array($asc, $sort_flags))
+			throw new InvalidArgumentException('sort flag only accepts SORT_ASC or SORT_DESC');
+		$cmp = function(array $a, array $b) use ($key, $asc, $sort_flags)
+			{
+				if (!is_array($key))
+				{ //just one key and sort direction 
+					if (!isset($a[$key]) || !isset($b[$key]))
+					{
+						throw new Exception('attempting to sort on non-existent keys');
+					}
+					if ($a[$key] == $b[$key])
+						return 0;
+					return ($asc == SORT_ASC xor $a[$key] < $b[$key]) ? 1 : -1;
+				} else
+				{ //using multiple keys for sort and sub-sort 
+					foreach ($key as $sub_key => $sub_asc)
+					{
+						//array can come as 'sort_key'=>SORT_ASC|SORT_DESC or just 'sort_key', so need to detect which 
+						if (!in_array($sub_asc, $sort_flags))
+						{
+							$sub_key = $sub_asc;
+							$sub_asc = $asc;
+						}
+						//just like above, except 'continue' in place of return 0 
+						if (!isset($a[$sub_key]) || !isset($b[$sub_key]))
+						{
+							throw new Exception('attempting to sort on non-existent keys');
+						}
+						if ($a[$sub_key] == $b[$sub_key])
+							continue;
+						return ($sub_asc == SORT_ASC xor $a[$sub_key] < $b[$sub_key]) ? 1 : -1;
+					}
+					return 0;
+				}
+			};
+		usort($array, $cmp);
+	}
+
+	/**
+	 * establim els paràmetres que ens arriben del formulari.
+	 */
+	public function setParams()
+	{
+		$this->file = basename($_GET['file']);
+		$this->memoryAlarm = (float) $_GET['memory'];
+		$this->timeAlarm = (float) $_GET['time'];
+
+		/**
+		 * mirem que sigui un arxiu vàlid
+		 */
+		if (!file_exists($this->logDirectory . '/' . $this->file))
+		{
+			throw new Exception("Can't access to file " . $this->logDirectory . '/' . $this->file);
+		}
+
+		$this->filesize = filesize($this->logDirectory . '/' . $this->file);
+	}
+
+	/**
+	 * la mare dels ous, la traça
+	 * 
+	 * Sense que serveixi de precedents i per un tema de performance, aquest
+	 * mètode escriurà a stdoutput directament.
+	 */
+	public function trace()
+	{
+		/**
+		 * recuperem la llista de funcions, les pròpies de PHP hi
+		 * seran sota ['internal']
+		 */
+		//$this->defFN = get_defined_functions();
+
+		/**
+		 * counter
+		 */
+		$jCnt = 0;
+
+		/**
+		 * Sumary
+		 */
+		$aSumary = array();
+		$aSumaryS = array();
 
 
-    $aSteps = array();
+		/**
+		 * inicialitzem alguns camps
+		 */
+		$prevLvl = 0;
+		$prevTim = 0;
+		$prevMem = 0;
+		$class = 'odd';
 
-    /**
-     * Process all lines
-     */
-    $fh = fopen($this->logDirectory . '/' . $this->file, 'r');
-    $nRow = 0;
-    $eof = true;
-    
-    while ($jReadedLine = fgets($fh))
-    {
-      $nRow++;
-      if ($nRow > $maxLin)
-      {
-        $eof = false;
-        break;
-      }
-      elseif ($nRow < $iniLin)
-      {
-        continue;
-      }
+		/**
+		 * mirem si ens demanen iniLin
+		 */
+		if (!isset($_GET['iniLin']))
+		{
+			$_GET['iniLin'] = 0;
+			$ctrlPrimeraLin = false;
+		}
+		else
+		{
+			$ctrlPrimeraLin = true;
+		}
+		$iniLin = (double) $_GET['iniLin'];
+		$maxLin = $iniLin + 1024;
 
-      $jData = explode("\t", $jReadedLine);
-      $jDataCnt = count($jData);
+		/**
+		 * només acceptarem tipus de traça 1
+		 */
+		if ($this->traceFormat != 1)
+		{
+			throw new Exception("xdebug.trace_format in /etc/php5/conf.d/xdebug.ini must be 1");
+		}
 
-      /**
-       * si es tracta de la capçalera de l'arxiu, la mostrem com a info
-       */
-      if ($jDataCnt == 1)
-      {
-        echo "<pre>$jReadedLine</pre>";
-        continue;
-      }
-      /**
-       * si és el registre de finalització d'una instrucció, la processem
-       */
-      elseif ($jDataCnt == 5)
-      {
+
+		$aSteps = array();
+
+		/**
+		 * Process all lines
+		 */
+		$fh = fopen($this->logDirectory . '/' . $this->file, 'r');
+		$nRow = 0;
+		$eof = true;
+
+		while ($jReadedLine = fgets($fh))
+		{
+			$nRow++;
+
+			if ($nRow < $iniLin)
+			{
+				continue;
+			}
+
+			$jData = explode("\t", $jReadedLine);
+			$jDataCnt = count($jData);
+
+			/**
+			 * si es tracta de la capçalera de l'arxiu, la mostrem com a info
+			 */
+			if ($jDataCnt == 1)
+			{
+				echo "<pre>$jReadedLine</pre>";
+				continue;
+			}
+			/**
+			 * si és el registre de finalització d'una instrucció, la processem
+			 */
+			elseif ($jDataCnt == 5)
+			{
 
 
 //        list($jFLevel, $jFId, $jFPoint, $jFTime, $jFMemory) = $jData;
 
 
-        /**
-         * Si és el final de tot, no el comptarem, doncs no tenim cap id d'incic
-         * el mostrarem directament
-         */
-        if ($jData[0] == '')
-        {
-          echo "<h3>TOTAL " . number_format(count($aSteps), 0) .
-          " function/method calls in " . number_format($jData[3], 6) . " ms with " .
-          number_format(((int) $jData[4]) / 1024, 3) . " KB's </h3>";
-        }
-        else
-        {
+				/**
+				 * Si és el final de tot, no el comptarem, doncs no tenim cap id d'incic
+				 * el mostrarem directament
+				 */
+				if ($jData[0] == '')
+				{
+					echo "<h3>TOTAL " . number_format(count($aSteps), 0) .
+					" function/method calls in " . number_format($jData[3], 6) . " ms with " .
+					number_format(((int) $jData[4]) / 1024, 3) . " KB's </h3>";
+				}
+				else
+				{
 
-          continue;
+					continue;
 
-          /**
-           * li restem el temps i la memòria
-           */
-          $aSteps[$jData[1]][3] = number_format((float) $jData[3] - (float) $aSteps[$jData[1]][3],
-                                                6);
-          $aSteps[$jData[1]][4] = number_format((float) $jData[4] - (float) $aSteps[$jData[1]][4],
-                                                0);
-        }
-      }
-      /**
-       * En qualsevol altre cas, és un registre d'inici d'instrucció
-       */
-      else
-      {
+					/**
+					 * li restem el temps i la memòria
+					 */
+					$aSteps[$jData[1]][3] = number_format((float) $jData[3] - (float) $aSteps[$jData[1]][3], 6);
+					$aSteps[$jData[1]][4] = number_format((float) $jData[4] - (float) $aSteps[$jData[1]][4], 0);
+				}
+			}
+			/**
+			 * En qualsevol altre cas, és un registre d'inici d'instrucció
+			 */
+			else
+			{
 //        list($jILevel, $jIId, $jIPoint, $jITime, $jIMemory, $jIFunction, 
 //          $jIType, $jIFile, $jIFilename, $jILine, $jINumParms) = $jData;
-        
-        
-        If ($prevTim == 0)
-        {
-          $prevTim = (float) $jData[3];
-          $prevMem = (float) $jData[4];
-          continue;
-        }
-        
-        
-        /**
-         * procedim a fer la sortida
-         */
-        
-        /**
-         * si hi ha un canvi de nivell, en funció de si és 
-         * més petit o més gran, 
-         */
-        if ($prevLvl < $jData[0])
-        {
-          if ($ctrlPrimeraLin)
-          {
-            echo str_repeat("<ul>", $jData[0]);
-            $ctrlPrimeraLin = false;
-          }
-          else
-          {
-          echo "<ul>";
-          }
-        }
-        elseif ($prevLvl > $jData[0])
-        {
-          echo str_repeat("</ul>", $prevLvl - $jData[0]);
-        }
 
 
-        $prevLvl = $jData[0];
-
-        echo "<li class=\"{$class}\">";
-
-
-        if ($class == 'odd')
-        {
-          $class = 'even';
-        }
-        else
-        {
-          $class = 'odd';
-        }
+				If ($prevTim == 0)
+				{
+					$prevTim = (float) $jData[3];
+					$prevMem = (float) $jData[4];
+					continue;
+				}
 
 
+				/**
+				 * procedim a fer la sortida
+				 */
+				/**
+				 * si hi ha un canvi de nivell, en funció de si és 
+				 * més petit o més gran, 
+				 */
+				if ($prevLvl < $jData[0])
+				{
+					if ($ctrlPrimeraLin)
+					{
+						echo str_repeat("<ul>", $jData[0]);
+						$ctrlPrimeraLin = false;
+					}
+					else
+					{
+						echo "<ul>";
+					}
+				}
+				elseif ($prevLvl > $jData[0])
+				{
+					echo str_repeat("</ul>", $prevLvl - $jData[0]);
+				}
 
-        echo '<span class="line">';
-        echo $jData[9];
-        echo "</span>";
 
-        echo '<span class="time">';
-        
+				$prevLvl = $jData[0];
+
+				echo "<li class=\"{$class}\">";
+
+
+				if ($class == 'odd')
+				{
+					$class = 'even';
+				}
+				else
+				{
+					$class = 'odd';
+				}
+
+
+
+				echo '<span class="line">';
+				echo "<a href='trace-code.php?file={$jData[8]}&line={$jData[9]}' target='trace-code'>$jData[9]</a>";
+				echo "</span>";
+
+				echo '<span class="time">';
+
 //        echo "ini"  . number_format($prevTim, 6) . "<br />";
 //        echo "end"  . number_format((float) $jData[3], 6) . "<br />";
-        echo number_format((float) $jData[3] - $prevTim, 6);
-        
-        echo "</span>";
+				$jSeconds = (float) $jData[3] - $prevTim;
+				echo number_format($jSeconds * 1000000, 0) . ' µs';
 
-        echo '<span class="mem">';
+				echo "</span>";
+
+				echo '<span class="mem">';
 //        echo "ini"  . number_format($prevMem, 0) . "<br />";
 //        echo "end"  . number_format((float) $jData[4], 0) . "<br />";
-        echo number_format((float) $jData[4] - $prevMem, 0);
-        echo "</span>";
+				echo number_format((float) $jData[4] - $prevMem, 0);
+				echo "</span>";
 
 
 
 //        list($jILevel, $jIId, $jIPoint, $jITime, $jIMemory, $jIFunction, 
 //          $jIType, $jIFile, $jIFilename, $jILine, $jINumParms) = $jData;
 
-        echo '<span class="func">';
-        echo "<b>{$jData[5]}</b><br/>";
+				echo '<span class="func">';
+				echo "<b>{$jData[5]}</b><br/>";
 
-        if ($jData[10] > 0)
-        {
-          echo "<ul>";
+				if ($jData[10] > 0)
+				{
+					echo "<ul>";
 
-          for ($jI = 11; $jI <= 10 + $jData[10]; $jI++)
-          {
-            echo "<li class=\"parm\">{$jData[$jI]}</li>";
-          }
-          echo "</ul>";
-        }
-        elseif (!empty($jData[7]))
-        {
-          echo "<ul><li class=\"parm\">{$jData[7]}</li></ul>";
-        }
+					for ($jI = 11; $jI <= 10 + $jData[10]; $jI++)
+					{
+						echo "<li class=\"parm\">{$jData[$jI]}</li>";
+					}
+					echo "</ul>";
+				}
+				elseif (!empty($jData[7]))
+				{
+					echo "<ul><li class=\"parm\">{$jData[7]}</li></ul>";
+				}
 
-        echo "<br/>";
+				echo "<br/>";
 
-        echo "<i class=\"pgm\">{$jData[8]}</i>";
-
-
-        echo '</span>';
+				echo "<i class=\"pgm\">{$jData[8]}</i>";
 
 
-        echo "</li>";
-        
-        $prevTim = (float) $jData[3];
-          $prevMem = (float) $jData[4];
-          
-        $lastLine = $nRow;
-          
-      }
-    }
-    
-    if (!$eof)
-    {
-        $_GET['iniLin'] = $lastLine + 1;
-        echo "<br /><br><a href=\"{$_SERVER['SCRIPT_NAME']}?";
-        foreach ($_GET as $parm => $val)
-        {
-          echo "{$parm}={$val}&";
-        }
-        echo "\">next 1024 lines</a>";
-     
-    }
-  }
+				echo '</span>';
 
-  public function debugMem($line, $method = null)
-  {
-    echo "<!-- line {$line} memory " . number_format(memory_get_usage(true), 0);
 
-    if (isset($method))
-    {
-      echo ' method ' . $method;
-    }
+				echo "</li>";
 
-    echo " -->";
-  }
+				/**
+				 * Si superem el màxim de línies, sortim
+				 */
+				if ($nRow > $maxLin)
+				{
+					$eof = false;
+					break;
+				}
+
+				$prevTim = (float) $jData[3];
+				$prevMem = (float) $jData[4];
+
+				$lastLine = $nRow;
+			}
+		}
+
+		if (!$eof)
+		{
+			$_GET['iniLin'] = $lastLine + 1;
+			echo "<br /><br><a href=\"{$_SERVER['SCRIPT_NAME']}?";
+			foreach ($_GET as $parm => $val)
+			{
+				echo "{$parm}={$val}&";
+			}
+			echo "\">next 1024 lines</a>";
+		}
+	}
+
+	public function debugMem($line, $method = null)
+	{
+		echo "<!-- line {$line} memory " . number_format(memory_get_usage(true), 0);
+
+		if (isset($method))
+		{
+			echo ' method ' . $method;
+		}
+
+		echo " -->";
+	}
 
 }
