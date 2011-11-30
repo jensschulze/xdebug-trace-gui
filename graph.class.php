@@ -30,8 +30,6 @@ class graph extends noutrace
 
 	private function output()
 	{
-		echo "<pre>";
-		var_dump($_SESSION['plot_centa'][$this->file]);
 		echo "<h2>Total time {$this->totTim} seconds</h2>";
 		echo "<h2>Total memory " . number_format($this->totMem,0)  . " bytes</h2>";
 		echo "<img src=\"plot_centa.php?file={$this->file}\" />";
