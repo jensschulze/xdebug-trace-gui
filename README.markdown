@@ -15,3 +15,14 @@ trace.php Xdebug trace gui. Old style, all in a page, with sumaries
 graph.php Xdebug trace graph. Statistics memory consumition MB per centesims. You need the parent folder of jpGraph in the include_path.
 
 Advisor: the code was writed quickly. The next time, better ;-)
+
+No trace the tracer!
+If the ini_set don't run, add this to your Apache VirtualHost file:
+        <Directory /srv/www/lab/xdebug-trace-gui>
+                Order allow,deny
+                allow from 10.10.10
+                deny from all
+                php_value 'xdebug.auto_trace' 'Off'
+        </Directory>
+
+Change the directory and the IP range to your convenience.

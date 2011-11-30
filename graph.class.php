@@ -31,12 +31,12 @@ class graph extends noutrace
 	private function output()
 	{
 		echo "<h2>Total time {$this->totTim} seconds</h2>";
-		echo "<h2>Total memeory " . number_format($this->totMem,0)  . " bytes</h2>";
+		echo "<h2>Total memory " . number_format($this->totMem,0)  . " bytes</h2>";
 		echo "<img src=\"plot_centa.php?file={$this->file}\" />";
 
 		$class = 'odd';
 		
-		echo "<h2>Script with time > 1 milisecond or memory > 1MB</h2><ul>";
+		echo "<h2>Scripts with time > 1 milisecond or memory > 1MB</h2><ul>";
 		foreach ($this->aScripts as $script => $value)
 		{
 			if ($value['tim'] > 0.001 or $value['mem'] > 1000000)

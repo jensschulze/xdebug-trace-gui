@@ -168,6 +168,6 @@ li.parm {
 
 
 .alarm {
-  border: 1px solid darkred;
+  border: 1px solid darkred !important;
   padding: 4px;
 }
