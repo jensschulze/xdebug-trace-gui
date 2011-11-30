@@ -3,6 +3,10 @@
   color: black;
 }
 
+body {
+  width: 10in;
+}
+
 strong {
   font-weight: bold;
 }
@@ -100,17 +104,23 @@ tr:nth-child(odd) {background: aliceblue;}
 ul {
   margin-left: 0.33em;
   padding-left: 0.66em;
-  
+
 }
 
 li { 
   line-height: 1.5em;
-     padding-top: 0.2em;
-     padding-bottom: 0.2em;
-        padding-left: 0.2em;
+  padding-top: 0.2em;
+  padding-bottom: 0.2em;
+  padding-left: 0.2em;
 }
-li.even {background: ivory;}
-li.odd {background: aliceblue;}
+li.even {
+  background: ivory;
+  border-bottom: 1pt solid lightgray;
+}
+li.odd {
+  background: aliceblue;
+  border-bottom: 1pt solid lightgray;
+}
 
 li.parm {
   line-height: 1.1em;
@@ -126,24 +136,25 @@ li.parm {
 
 .line {
   position: absolute;
-  width: 6%;
-  left: 82%;
+  width: 1in;
+  left: 7in;
   vertical-align: top;
   text-align: right;
 }
 
 .mem {
   position: absolute;
-  width: 6%;
-  left: 93%;
+  width: 1in;
+  left: 9in;
   vertical-align: top;
   text-align: right;
 }
 
 .time {
   position: absolute;
-  width: 6%;
-  left: 87%;
+  width: 1in;
+  left: 8in;
+
   vertical-align: top;
   text-align: right;
 }

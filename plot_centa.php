@@ -15,7 +15,7 @@ else
 }
 
 // Setup the graph
-$graph = new Graph(640,480);
+$graph = new Graph(960,480);
 //$graph->SetScale("intlin",0,$aYMax=50);
 $graph->SetScale("intlin");
 $theme_class=new UniversalTheme;
