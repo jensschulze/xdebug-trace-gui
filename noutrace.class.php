@@ -22,6 +22,7 @@ class noutrace
 	public function rtvFiles()
 	{
 		$ret = '';
+    $aFiles = array();
 		$files = new DirectoryIterator($this->logDirectory);
 		foreach ($files as $file)
 		{
@@ -35,10 +36,12 @@ class noutrace
 			$date = date('Y-m-d H:i:s', $file->getCTime());
 
 
-			$ret .= '<option value="' . $file->getFilename() . '"> ' . $date . ' - ' . $file->getFilename() . '- ' . number_format($file->getSize() / 1024, 0, ',', '.') . ' KB</option>';
+			$aFiles[$date . uniqid()] = '<option value="' . $file->getFilename() . '"> ' . $date . ' - ' . $file->getFilename() . '- ' . number_format($file->getSize() / 1024, 0, ',', '.') . ' KB</option>';
 		}
 
-		return $ret;
+    ksort($aFiles);
+    
+		return implode("\n", $aFiles);
 	}
 
 	public function aryComp($a, $b)

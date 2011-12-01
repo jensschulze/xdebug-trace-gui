@@ -9,6 +9,7 @@ class graph extends noutrace
 	protected $aFunc = array();
 	protected $totTim = 0;
 	protected $totMem = 0;
+  protected $md5File;
 
 	/**
 	 * establim els paràmetres que ens arriben del formulari.
@@ -16,6 +17,7 @@ class graph extends noutrace
 	public function setParams()
 	{
 		$this->file = basename($_GET['file']);
+    $this->md5File = md5($this->file);
 
 		/**
 		 * mirem que sigui un arxiu vàlid
@@ -32,7 +34,7 @@ class graph extends noutrace
 	{
 		echo "<h2>Total time {$this->totTim} seconds</h2>";
 		echo "<h2>Max memory " . number_format($this->totMem,0)  . " bytes</h2>";
-		echo "<img src=\"plot_centa.php?file={$this->file}\" />";
+		echo "<img src=\"plot_centa.php?file={$this->md5File}\" />";
 
 		$class = 'odd';
 		
@@ -117,7 +119,7 @@ class graph extends noutrace
 		$prevMem = 0;
 		$lastMem = 0;
 
-		$_SESSION['plot_centa'][$this->file] = array();
+		$_SESSION['plot_centa'][$this->md5File] = array();
 
 		while ($jReadedLine = fgets($fh))
 		{
@@ -153,7 +155,7 @@ class graph extends noutrace
 				
 				for ($i = $prevCenta; $i < $nouCenta; $i += 1)
 				{
-					$_SESSION['plot_centa'][$this->file][] = number_format($jData[4] / (1024 * 1024), 1);
+					$_SESSION['plot_centa'][$this->md5File][] = number_format($jData[4] / (1024 * 1024), 1);
 
 				}
 				
@@ -211,7 +213,7 @@ class graph extends noutrace
 			$prevTim = $jData[3];
 			$prevMem = $jData[4];
 		}
-		$_SESSION['plot_centa'][$this->file][] = $lastMem;
+		$_SESSION['plot_centa'][$this->md5File][] = $lastMem;
 
 
 		$this->output();
