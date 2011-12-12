@@ -10,6 +10,7 @@
     <?
     require 'noutrace.class.php';
     $xdb = new noutrace();
+    $xdb->setParams();
     ?>
 
     <h1>Xdebug Trace File Parser</h1>
@@ -17,13 +18,13 @@
     <form method="get" action="noutrace.php">
       <label>File
         <select name="file">
-          <option value="" selected="selected"> -- Select -- </option>
+          <option value=""> -- Select -- </option>
           <?php echo $xdb->rtvFiles(); ?>
         </select>
       </label>
-
-      <label>If the memory jumps <input type="text" name="memory" value="<?= $xdb->memoryAlarm ?>" style="text-align:right" size="5"/> MB, provide an alert</label>
-      <label>If the execution time jumps <input type="text" name="time" value="<?= $xdb->timeAlarm ?>" style="text-align:right" size="5"/> seconds, provide an alert</label>
+      <label>Filter only one instruction <input type="text" name="onlyOneInstruction" value="<?= $xdb->onlyOneInstruction ?>"  size="40"/> </label>
+<!--      <label>If the memory jumps <input type="text" name="memory" value="<?= $xdb->memoryAlarm ?>" style="text-align:right" size="5"/> MB, provide an alert</label>
+      <label>If the execution time jumps <input type="text" name="time" value="<?= $xdb->timeAlarm ?>" style="text-align:right" size="5"/> seconds, provide an alert</label>-->
 
       <input type="submit" value="parse" />
 
@@ -34,19 +35,14 @@
     {
       exit;
     }
-    else
-    {
-      $xdb->debugMem(__LINE__);
-      $xdb->setParams();
-    }
     
     echo "<h2>Output {$xdb->file}</h2>";
     echo number_format($xdb->filesize, 0) . " bytes <br />";
     
     
-    $xdb->debugMem(__LINE__);
+    //$xdb->debugMem(__LINE__);
     $xdb->trace();
-    $xdb->debugMem(__LINE__);
+    //$xdb->debugMem(__LINE__);
     ?>
     
     

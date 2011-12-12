@@ -76,7 +76,7 @@ tr.near td {
   background: #fffac1;
 }
 
-tr.line td {
+tr.tracecode td {
   background: #f7f09f;
 }
 
@@ -164,6 +164,26 @@ li.parm {
   width: 1in;
   left: 8in;
 
+  vertical-align: top;
+  text-align: right;
+}
+
+
+
+.tdnum {
+  width: 1in;
+  vertical-align: top;
+  text-align: right;
+}
+
+.tdmem {
+  width: 1in;
+  vertical-align: top;
+  text-align: right;
+}
+
+.tdtime {
+  width: 1in;
   vertical-align: top;
   text-align: right;
 }

@@ -29,7 +29,7 @@ require 'trace.config.php';
                     $class = 'near';
                 }
                 if ($i == $_GET['line']) {
-                    $class = 'line';
+                    $class = 'tracecode';
                 }
 
                 echo '<tr class="' . $class . '"><td class="digit"><a name="l' . ($i) . '">' . ($i) . '</a></td><td>' . str_replace('&lt;?php&nbsp;', '', highlight_string('<?php ' . $line, true)) . '</td></tr>';

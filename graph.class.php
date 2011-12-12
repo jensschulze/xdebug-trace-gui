@@ -18,18 +18,21 @@ class graph
    */
   public function setParams()
   {
-    $this->file = basename($_GET['file']);
-    $this->md5File = md5($this->file);
-
-    /**
-     * mirem que sigui un arxiu vàlid
-     */
-    if (!file_exists($this->logDirectory . '/' . $this->file))
+    if (isset($_GET['file']))
     {
-      throw new Exception("Can't access to file " . $this->logDirectory . '/' . $this->file);
-    }
+      $this->file = basename($_GET['file']);
+      $this->md5File = md5($this->file);
 
-    $this->filesize = filesize($this->logDirectory . '/' . $this->file);
+      /**
+       * mirem que sigui un arxiu vàlid
+       */
+      if (!file_exists($this->logDirectory . '/' . $this->file))
+      {
+        throw new Exception("Can't access to file " . $this->logDirectory . '/' . $this->file);
+      }
+
+      $this->filesize = filesize($this->logDirectory . '/' . $this->file);
+    }
   }
 
   private function output()
@@ -42,7 +45,13 @@ class graph
     $class = 'odd';
 
     //echo "<h2>Scripts with time > 1 milisecond or memory > 1MB</h2><ul>";
-    echo "<h2>Scripts</h2><ul>";
+    echo "<h2>Scripts</h2><table id=\"tableScripts\">";
+    echo "<tr>
+      <th class=\"tdfunc\">Function</th>
+      <th class=\"tdmem\">Mem KB</th>
+      <th class=\"tdtime\">Time µs</th>
+      <th class=\"tdnum\">Count</th>
+      </tr>";
     foreach ($this->aScripts as $script => $value)
     {
       // if ($value['tim'] > 0.001 or $value['mem'] > 1000000)
@@ -67,20 +76,28 @@ class graph
         }
 
 
-        $value['tim'] = number_format($value['tim'] * 1000000, 0) . ' µs';
-        $value['mem'] = number_format($value['mem'] / 1024, 0) . ' KB';
-        echo "<li class=\"${class} {$alarm}\">";
-        echo "<span class=\"num\">{$value['num']}</span>";
-        echo "<span class=\"time\">{$value['tim']}</span>";
-        echo "<span class=\"mem\">{$value['mem']}</span>";
-        echo "<span class=\"func\">{$script}</span>";
-        echo "</li>";
+        $value['tim'] = number_format($value['tim'] * 1000000, 0, ',', '.');
+        $value['mem'] = number_format($value['mem'] / 1024, 0, ',', '.');
+        echo "<tr class=\"${class} {$alarm}\">";
+
+        echo "<td class=\"tdfunc\">{$script}</td>";
+        echo "<td class=\"tdmem\">{$value['mem']}</td>";
+        echo "<td class=\"tdtime\">{$value['tim']}</td>";
+        echo "<td class=\"tdnum\">{$value['num']}</td>";
+
+        echo "</tr>";
       }
     }
-    echo "</ul>";
+    echo "</table>";
 
 
-    echo "<h2>Operations</h2><ul>";
+    echo "<h2>Operations</h2><table id=\"tableOperations\">";
+    echo "<tr>
+      <th class=\"tdfunc\">Function</th>
+      <th class=\"tdmem\">Mem KB</th>
+      <th class=\"tdtime\">Time µs</th>
+      <th class=\"tdnum\">Count</th>
+      </tr>";
     //echo "<h2>Operations with acumulated time > 1 milisecond or memory > 1MB</h2><ul>";
     foreach ($this->aFunc as $script => $value)
     {
@@ -103,17 +120,19 @@ class graph
         {
           $alarm = '';
         }
-        $value['tim'] = number_format($value['tim'] * 1000000, 0) . ' µs';
-        $value['mem'] = number_format($value['mem'] / 1024, 0) . ' KB';
-        echo "<li class=\"${class} {$alarm}\">";
-        echo "<span class=\"num\">{$value['num']}</span>";
-        echo "<span class=\"time\">{$value['tim']}</span>";
-        echo "<span class=\"mem\">{$value['mem']}</span>";
-        echo "<span class=\"func\">{$script}</span>";
-        echo "</li>";
+        $value['tim'] = number_format($value['tim'] * 1000000, 0, ',', '.');
+        $value['mem'] = number_format($value['mem'] / 1024, 0, ',', '.');
+        echo "<tr class=\"${class} {$alarm}\">";
+
+        echo "<td class=\"tdfunc\">{$script}</td>";
+        echo "<td class=\"tdmem\">{$value['mem']}</td>";
+        echo "<td class=\"tdtime\">{$value['tim']}</td>";
+        echo "<td class=\"tdnum\">{$value['num']}</td>";
+
+        echo "</tr>";
       }
     }
-    echo "</ul>";
+    echo "</table>";
   }
 
   public function trace()
