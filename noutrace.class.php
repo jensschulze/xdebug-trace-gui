@@ -9,6 +9,7 @@ class noutrace
   public $memoryAlarm = 0.3;
   public $timeAlarm = 0.03;
   public $onlyOneInstruction = '';
+  public $onlyOneScript = '';
   public $customNamespace = 'Corretge\\';
   public $filesize;
   protected $defFN;
@@ -76,7 +77,7 @@ class noutrace
     $cmp = function(array $a, array $b) use ($key, $asc, $sort_flags)
       {
         if (!is_array($key))
-        { //just one key and sort direction 
+        { //just one key and sort direction
           if (!isset($a[$key]) || !isset($b[$key]))
           {
             throw new Exception('attempting to sort on non-existent keys');
@@ -85,16 +86,16 @@ class noutrace
             return 0;
           return ($asc == SORT_ASC xor $a[$key] < $b[$key]) ? 1 : -1;
         } else
-        { //using multiple keys for sort and sub-sort 
+        { //using multiple keys for sort and sub-sort
           foreach ($key as $sub_key => $sub_asc)
           {
-            //array can come as 'sort_key'=>SORT_ASC|SORT_DESC or just 'sort_key', so need to detect which 
+            //array can come as 'sort_key'=>SORT_ASC|SORT_DESC or just 'sort_key', so need to detect which
             if (!in_array($sub_asc, $sort_flags))
             {
               $sub_key = $sub_asc;
               $sub_asc = $asc;
             }
-            //just like above, except 'continue' in place of return 0 
+            //just like above, except 'continue' in place of return 0
             if (!isset($a[$sub_key]) || !isset($b[$sub_key]))
             {
               throw new Exception('attempting to sort on non-existent keys');
@@ -133,13 +134,18 @@ class noutrace
     {
       $this->onlyOneInstruction = ($_GET['onlyOneInstruction']);
     }
-    //$this->memoryAlarm = (float) $_GET['memory'];
+    if (isset($_GET['onlyOneScript']))
+    {
+      $this->onlyOneScript = ($_GET['onlyOneScript']);
+    }
+
+     //$this->memoryAlarm = (float) $_GET['memory'];
     //$this->timeAlarm = (float) $_GET['time'];
   }
 
   /**
    * la mare dels ous, la traça
-   * 
+   *
    * Sense que serveixi de precedents i per un tema de performance, aquest
    * mètode escriurà a stdoutput directament.
    */
@@ -155,6 +161,7 @@ class noutrace
      * counter
      */
     $jCnt = 0;
+
 
     /**
      * Sumary
@@ -189,7 +196,10 @@ class noutrace
     /**
      * mirem si ens demanen una instrucció concreta, llavors no hi ha limit
      */
-    $controlDeLinies = empty($this->onlyOneInstruction);
+    $controlDeLinies = (!empty($this->onlyOneInstruction) or !empty($this->onlyOneScript));
+    $controlInstruction = !empty($this->onlyOneInstruction);
+    $controlScript = !empty($this->onlyOneScript);
+
 
     /**
      * només acceptarem tipus de traça 1
@@ -198,7 +208,6 @@ class noutrace
     {
       throw new Exception("xdebug.trace_format in /etc/php5/conf.d/xdebug.ini must be 1");
     }
-
 
     $aSteps = array();
 
@@ -213,7 +222,7 @@ class noutrace
     {
       $nRow++;
 
-      if ($controlDeLinies and $nRow < $iniLin)
+      if (!$controlDeLinies and $nRow < $iniLin)
       {
         continue;
       }
@@ -234,7 +243,6 @@ class noutrace
        */
       elseif ($jDataCnt == 5)
       {
-
 
 //        list($jFLevel, $jFId, $jFPoint, $jFTime, $jFMemory) = $jData;
 
@@ -268,15 +276,18 @@ class noutrace
        */
       else
       {
-//        list($jILevel, $jIId, $jIPoint, $jITime, $jIMemory, $jIFunction, 
+//        list($jILevel, $jIId, $jIPoint, $jITime, $jIMemory, $jIFunction,
 //          $jIType, $jIFile, $jIFilename, $jILine, $jINumParms) = $jData;
-
 
         If ($prevTim == 0)
         {
           $prevTim = (float) $jData[3];
           $prevMem = (float) $jData[4];
-          continue;
+
+          if ($iniLin == 0)
+          {
+              continue;
+          }
         }
 
 
@@ -284,8 +295,8 @@ class noutrace
          * procedim a fer la sortida
          */
         /**
-         * si hi ha un canvi de nivell, en funció de si és 
-         * més petit o més gran, 
+         * si hi ha un canvi de nivell, en funció de si és
+         * més petit o més gran,
          */
         if ($prevLvl < $jData[0])
         {
@@ -308,16 +319,21 @@ class noutrace
         $prevLvl = $jData[0];
 
 
-
         /**
          * imprimim, només si es correspon a la instrucció que han demanat.
          */
-        if (empty($this->onlyOneInstruction) or strpos($this->onlyOneInstruction,
-                                                       $jData[5]) === 0)
+        if (!$controlDeLinies or
+            ($controlInstruction and strpos($this->onlyOneInstruction, $jData[5]) === 0) or
+            ($controlScript and strpos($jData[8], $this->onlyOneScript) !== false)
+
+            )
         {
-          echo "<li class=\"{$class}\">";
+            echo "<li title=\"{$nRow}\" class=\"{$class}\">";
 
 
+          /**
+           * @todo fer-ho via CSS
+           */
           if ($class == 'odd')
           {
             $class = 'even';
@@ -350,7 +366,7 @@ class noutrace
 
 
 
-//        list($jILevel, $jIId, $jIPoint, $jITime, $jIMemory, $jIFunction, 
+//        list($jILevel, $jIId, $jIPoint, $jITime, $jIMemory, $jIFunction,
 //          $jIType, $jIFile, $jIFilename, $jILine, $jINumParms) = $jData;
 
           echo '<span class="func">';
@@ -387,7 +403,7 @@ class noutrace
         /**
          * Si superem el màxim de línies, sortim
          */
-        if ($controlDeLinies and $nRow > $maxLin)
+        if (!$controlDeLinies and $nRow > $maxLin)
         {
           $eof = false;
           break;
