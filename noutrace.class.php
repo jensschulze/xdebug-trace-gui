@@ -28,11 +28,11 @@ class noutrace
     $files = new DirectoryIterator($this->logDirectory);
     foreach ($files as $file)
     {
-
       if (substr_count($file->getFilename(), '.xt') == 0)
       {
         continue;
       }
+
 
       $date = explode('.', $file->getFilename());
       $date = date('Y-m-d H:i:s', $file->getCTime());
@@ -46,10 +46,10 @@ class noutrace
         $jSel = '';
       }
 
-      $aFiles[$date . uniqid()] = '<option value="' . $file->getFilename() . '" ' . $jSel . '> ' . $date . ' - ' . $file->getFilename() . '- ' . number_format($file->getSize() / 1024,
+      $aFiles[$date . uniqid()] = '<option value="' . $file->getFilename() . '" ' . $jSel . '> ' . $date . ' - ' . str_replace('_','-',$file->getFilename()) . '-' . number_format($file->getSize() / 1024,
                                                                                                                                                  0,
                                                                                                                                                  ',',
-                                                                                                                                                 '.') . ' KB</option>';
+                                                                                                                                                 '.') . '-KB</option>';
     }
 
     ksort($aFiles);
