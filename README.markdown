@@ -12,17 +12,23 @@ noutrace.php Xdebug trace gui. With pagination, 1024 sentences in a page. For bi
 
 trace.php Xdebug trace gui. Old style, all in a page, with sumaries
 
-graph.php Xdebug trace graph. Statistics memory consumition MB per centesims. You need the parent folder of jpGraph in the include_path.
+graph.php Xdebug trace graph. Statistics memory consumition MB per centesims. You need the parent folder of <a href="https://github.com/corretge/JpGraph" target="_blank">jpGraph</a> in the include_path.
+
+
 
 Advisor: the code was writed quickly. The next time, better ;-)
 
 No trace the tracer!
 If the ini_set don't run, add this to your Apache VirtualHost file:
-        <Directory /srv/www/lab/xdebug-trace-gui>
+<pre>
+  &lt;Directory /srv/www/lab/xdebug-trace-gui&gt;
                 Order allow,deny
                 allow from 10.10.10
                 deny from all
                 php_value 'xdebug.auto_trace' 'Off'
-        </Directory>
+        &lt;/Directory&gt;
+</pre>
 
+look at the file xdebug.httpd.conf for an Apache VirtualHost sample configuration.
+ 
 Change the directory and the IP range to your convenience.
