@@ -20,6 +20,7 @@ If the `ini_set` doesn't run, add this to your Apache VirtualHost file:
         allow from 10.10.10
         deny from all
         php_value 'xdebug.auto_trace' 'Off'
+        php_value short_open_tag 1
     </Directory>
 
 Look at the file `xdebug.httpd.conf` for an Apache VirtualHost sample configuration.
