@@ -1,0 +1,8 @@
+{
+  "require": {
+    "twig/twig": "1.18.*"
+  },
+  "autoload": {
+    "psr-4": {"jensschulze3000\\": "jensschulze3000/"}
+  }
+}

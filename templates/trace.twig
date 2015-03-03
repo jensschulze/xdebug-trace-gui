@@ -1,0 +1,70 @@
+{% set time = 0 %}
+{% set timeOld = 0 %}
+{% set memory = 0 %}
+{% set memoryOld = 0 %}
+{% set level = 1 %}
+{% set levelOld = 1 %}
+{% set firstTreeElement = true %}
+    {% for row in data.rows %}
+        {% set length = row|length %}
+        {% if 1 == length %}
+    <div class="alert alert-info">{{ row.0 }}</div>
+{% elseif 5 == length %}
+    {% if '' == row.0 %}
+        Steps: {{ loop.index1 }}
+    {% endif %}
+        {% elseif 6 == length %}
+            Retval: {{ row.5 }}
+        {% else %}
+            {% if true == firstTreeElement %}
+    <ul class="tree">{% set firstTreeElement = false %}{% endif %}
+    {% set level = row.0 %}
+    {% if level > levelOld %}
+    {% for j in range(levelOld, (level - 1)) %}
+        <ul>{% endfor %}
+        {% elseif level < levelOld %}
+        {% for j in range(level, (levelOld - 1)) %}</li></ul>
+    </li></ul>
+        {% endfor %}
+    {% endif %}
+    {% set functionNumber = row.1 %}
+    {% set time = row.3 %}
+    {% set timeDelta = (time - timeOld) * 1000000 %}
+    {% set memory = row.4 %}
+    {% set memoryDelta = memory - memoryOld %}
+    {% set functionName = row.5 %}
+    {% set functionType = row.6 %}
+    {% set includeFile = row.7 %}
+    {% set filename = row.8 %}
+    {% set lineNumber = row.9 %}
+    {% set numberOfParameters = row.10 %}
+    {% set highestParameterIndex = 10 + numberOfParameters %}
+    {% if level > levelOld %}
+<li><span class="pgm">{{ filename }}:</span>
+    <ul>{% endif %}
+        <li>
+            <span class="line">{{ lineNumber }}</span>
+            <span class="func">{{ functionName }}</span>{% if '' != includeFile %} '<span class="parm">{{ includeFile }}</span>'{% endif %}
+            <span class="time">{{ timeDelta|number_format(0, '.', '') }} µs</span>
+            <span class="mem">{{ memoryDelta|number_format(0, '.', '') }}</span>
+            {% if numberOfParameters > 0 %}
+                <ul>
+                    {% for i in range(11, highestParameterIndex) %}
+                        <li class="parm">{{ attribute(row,i) }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% endif %}
+            {% set levelOld = level %}
+            {% set timeOld = time %}
+            {% set memoryOld = memory %}
+            {% endfor %}
+    </ul>
+    {% for j in range(1, (levelOld - 1)) %}</li></ul>
+
+{% endfor %}
+{% set querystring = '' %}
+{% for key, value in data.queryParameters %}
+    {% set querystring = querystring ~ '&' ~ key ~ '=' ~ value %}
+{% endfor %}
+{{ querystring }}
